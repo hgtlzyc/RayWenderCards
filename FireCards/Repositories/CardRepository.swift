@@ -1,4 +1,4 @@
-/// Copyright (c) 2020 Razeware LLC
+/// Copyright (c) 2021 Razeware LLC
 /// 
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
 /// of this software and associated documentation files (the "Software"), to deal
@@ -30,47 +30,66 @@
 /// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 /// THE SOFTWARE.
 
-import SwiftUI
+import FirebaseFirestore
+import FirebaseFirestoreSwift
+import Combine
 
-struct CardListView: View {
-  @ObservedObject var cardlistViewModel = CardListViewModel()
+/// A type of object with a publisher that emits before the object has changed.
+///
+/// By default an ``ObservableObject`` synthesizes an ``ObservableObject/objectWillChange-2oa5v`` publisher that emits the changed value before any of its `@Published` properties changes.
+                        
+                        
+class CardRespository {
   
-  @State var showForm = false
-
-  var body: some View {
-    NavigationView {
-      VStack {
-        Spacer()
-        VStack {
-          GeometryReader { geometry in
-            ScrollView(.horizontal) {
-              HStack(spacing: 10) {
-                ForEach(cardlistViewModel.cardViewModels) { cardVM in
-                  CardView(cardViewModel: cardVM)
-                    .padding([.leading, .trailing])
-                }
-              }.frame(height: geometry.size.height)
-            }
-          }
+  private let pathForCardsCollection: String = "cards"
+  private let store = Firestore.firestore()
+  
+  @Published var cards: [Card] = []
+  
+  init() {
+    get()
+  }
+  
+  // MARK: - CRUD Functions
+  
+  //create
+  func add(_ card: Card) {
+    
+    do {
+      
+      try store.collection(pathForCardsCollection)
+        .document(card.id)
+        .setData(from: card) { err in
+          guard let error = err else { return }
+          print("unable to create new card in \(#file) with \(error.localizedDescription)")
         }
-        Spacer()
-      }
-      .sheet(isPresented: $showForm) {
-        NewCardForm(cardListViewmodel: CardListViewModel())
-      }
-      .navigationBarTitle("🔥 Fire Cards")
-        // swiftlint:disable multiple_closures_with_trailing_closure
-        .navigationBarItems(trailing: Button(action: { showForm.toggle() }) {
-          Image(systemName: "plus")
-            .font(.title)
-        })
-    }
-    .navigationViewStyle(StackNavigationViewStyle())
-  }
-}
 
-struct CardListView_Previews: PreviewProvider {
-  static var previews: some View {
-    CardListView(cardlistViewModel: CardListViewModel())
-  }
-}
+    } catch {
+      print("error in \(#function) with \(error)")
+    }
+    
+  }///End of  add
+  
+  
+  //read
+  func get() {
+    store.collection( pathForCardsCollection )
+      .addSnapshotListener { querySnapshot, error in
+        if let error = error {
+          print("error in function \(#function) \(error.localizedDescription)")
+          return
+        }
+        
+        guard let qs = querySnapshot else { return }
+        
+        self.cards = qs.documents.compactMap { doc in
+          try? doc.data(as: Card.self)
+        }
+        
+      }///End of  snapShootListenerCallBack
+  }///End of get()
+
+  //update
+  //func update(card: Card, with)
+  
+}///End of  CardRespository

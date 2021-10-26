@@ -31,17 +31,40 @@
 /// THE SOFTWARE.
 
 import Foundation
+import FirebaseFirestore
 
-struct Card: Identifiable {
-  var id: String = UUID().uuidString
+
+struct Card: Identifiable, Codable {
+    
+  var userId: String?
   var question: String
   var answer: String
-  var successful: Bool = true
-  var userId: String?
-}
+  var timeStamp: Date
+  var successful: Bool
+  var id: String
+  
+  init(userID: String?,
+       question: String,
+       answer: String,
+       timestamp: Date = Date(),
+       isSuccessful: Bool = true,
+       id: String = UUID().uuidString ) {
+    
+    self.userId = userID
+    self.question = question
+    self.answer = answer
+    self.timeStamp = timestamp
+    self.successful = isSuccessful
+    self.id = id
+    
+  }///End of  init
+  
+}///End of  Card
+
+
 
 #if DEBUG
 let testData = (1...10).map { i in
-  Card(question: "Question #\(i)", answer: "Answer #\(i)")
+  Card(userID: "", question: "Question #\(i)", answer: "Answer #\(i)")
 }
 #endif

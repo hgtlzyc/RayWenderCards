@@ -31,12 +31,17 @@
 /// THE SOFTWARE.
 
 import SwiftUI
+import FirebaseAuth
 
 struct NewCardForm: View {
   @State var question: String = ""
   @State var answer: String = ""
   @Environment(\.presentationMode) var presentationMode
 
+  /// A property wrapper type that subscribes to an observable object and
+  /// invalidates a view whenever the observable object changes.
+  @ObservedObject var cardListViewmodel: CardListViewModel
+  
   var body: some View {
     VStack(alignment: .center, spacing: 30) {
       VStack(alignment: .leading, spacing: 10) {
@@ -51,18 +56,30 @@ struct NewCardForm: View {
         TextField("Enter the answer", text: $answer)
           .textFieldStyle(RoundedBorderTextFieldStyle())
       }
-      Button(action: {}) {
+      Button(action: addCard) {
         Text("Add New Card")
           .foregroundColor(.blue)
       }
       Spacer()
     }
     .padding(EdgeInsets(top: 80, leading: 40, bottom: 0, trailing: 40))
+    
+  }///End of  body
+  
+  
+  private func addCard() {
+    //guard let currentUserID = cardListViewmodel.currentUserID else { return }
+    let currentUserID = Auth.auth().currentUser?.uid
+    let card = Card(userID: currentUserID ?? "no user ID", question: question, answer: answer)
+    
+    cardListViewmodel.add(card)
+    presentationMode.wrappedValue.dismiss()
   }
-}
+  
+}///End of  NewCardForm
 
 struct NewCardForm_Previews: PreviewProvider {
   static var previews: some View {
-    NewCardForm()
+    NewCardForm(cardListViewmodel: CardListViewModel())
   }
 }
